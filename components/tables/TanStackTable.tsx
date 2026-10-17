@@ -2,7 +2,6 @@
 
 // From https://github.com/imperial/cpp-connect/blob/main/components/TanstackTable.tsx
 // By Kishan, Alex, Matthew, Brady, Illia
-
 /**
  * Copyright 2024 Imperial College London
 
@@ -52,6 +51,9 @@ import { features, type AppColumnDef } from "./tableFeatures";
 import styles from "./tanstack-table.module.scss";
 
 const ICON_SIZE = 20;
+
+/** Narrowest a column gets before the table scrolls sideways (px) */
+const COLUMN_MIN_WIDTH = 100;
 
 interface TanstackTableProps<T extends RowData> {
     data: T[];
@@ -192,68 +194,71 @@ export default function TanstackTable<T extends RowData>({
                 </Group>
             )}
 
-            <Table {...tableProps}>
-                <Table.Thead
-                    bg={differentHeaderColour ? "docsoc.9" : undefined}
-                    c={differentHeaderColour && theme === "light" ? "white" : undefined}
-                >
-                    {table.getHeaderGroups().map((headerGroup) => (
-                        <Table.Tr key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                                <Table.Th
-                                    key={header.id}
-                                    onClick={() =>
-                                        header.column.getCanSort() &&
-                                        header.column.toggleSorting(
-                                            header.column.getIsSorted() === "asc",
-                                        )
-                                    }
-                                    className={styles.tableHeader}
-                                >
-                                    <Center>
-                                        <span style={{ flex: "1 1 0" }}>
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                      header.column.columnDef.header,
-                                                      header.getContext(),
-                                                  )}
-                                        </span>
-                                        {header.column.getCanSort() &&
-                                            getSortingIcon(header.column.getIsSorted())}
-                                    </Center>
-                                </Table.Th>
-                            ))}
-                        </Table.Tr>
-                    ))}
-                </Table.Thead>
+            {/* Scroll the table sideways inside its container instead of stretching the whole page */}
+            <Table.ScrollContainer minWidth={columns.length * COLUMN_MIN_WIDTH}>
+                <Table {...tableProps}>
+                    <Table.Thead
+                        bg={differentHeaderColour ? "docsoc.9" : undefined}
+                        c={differentHeaderColour && theme === "light" ? "white" : undefined}
+                    >
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <Table.Tr key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <Table.Th
+                                        key={header.id}
+                                        onClick={() =>
+                                            header.column.getCanSort() &&
+                                            header.column.toggleSorting(
+                                                header.column.getIsSorted() === "asc",
+                                            )
+                                        }
+                                        className={styles.tableHeader}
+                                    >
+                                        <Center>
+                                            <span style={{ flex: "1 1 0" }}>
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                          header.column.columnDef.header,
+                                                          header.getContext(),
+                                                      )}
+                                            </span>
+                                            {header.column.getCanSort() &&
+                                                getSortingIcon(header.column.getIsSorted())}
+                                        </Center>
+                                    </Table.Th>
+                                ))}
+                            </Table.Tr>
+                        ))}
+                    </Table.Thead>
 
-                <Table.Tbody className={styles.tanstackBody}>
-                    {table.getRowModel().rows.map((row) => (
-                        <Table.Tr key={row.id}>
-                            {row
-                                .getVisibleCells()
-                                .map((cell) =>
-                                    cell.column.getIsFirstColumn() ? (
-                                        <Table.Th key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext(),
-                                            )}
-                                        </Table.Th>
-                                    ) : (
-                                        <Table.Td key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext(),
-                                            )}
-                                        </Table.Td>
-                                    ),
-                                )}
-                        </Table.Tr>
-                    ))}
-                </Table.Tbody>
-            </Table>
+                    <Table.Tbody className={styles.tanstackBody}>
+                        {table.getRowModel().rows.map((row) => (
+                            <Table.Tr key={row.id}>
+                                {row
+                                    .getVisibleCells()
+                                    .map((cell) =>
+                                        cell.column.getIsFirstColumn() ? (
+                                            <Table.Th key={cell.id}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext(),
+                                                )}
+                                            </Table.Th>
+                                        ) : (
+                                            <Table.Td key={cell.id}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext(),
+                                                )}
+                                            </Table.Td>
+                                        ),
+                                    )}
+                            </Table.Tr>
+                        ))}
+                    </Table.Tbody>
+                </Table>
+            </Table.ScrollContainer>
 
             {enablePagination && (
                 <Pagination
