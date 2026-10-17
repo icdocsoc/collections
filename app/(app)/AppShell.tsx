@@ -9,6 +9,7 @@ import {
     Button,
     Container,
     Group,
+    GroupProps,
     NavLink,
     Switch,
     useMantineColorScheme,
@@ -21,6 +22,23 @@ import { FaMoon, FaSun } from "react-icons/fa6";
 
 // From https://mantine.dev/app-shell/?e=MobileNavbar&s=code
 
+const NAV_LINKS = [
+    { href: "/", label: "Home" },
+    { href: "/settings", label: "Settings" },
+    { href: "/products", label: "Products" },
+];
+
+const ThemeToggle = (props: GroupProps) => {
+    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+    return (
+        <Group {...props}>
+            <FaSun />
+            <Switch checked={colorScheme === "dark"} onChange={() => toggleColorScheme()} />
+            <FaMoon />
+        </Group>
+    );
+};
+
 const LinkTo = ({ href, children }: { href: string; children: React.ReactNode }) => {
     const pathname = usePathname();
     return (
@@ -31,8 +49,8 @@ const LinkTo = ({ href, children }: { href: string; children: React.ReactNode })
 };
 
 export function DoCSocAppShell({ children }: { children: React.ReactNode }) {
-    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-    const [opened, { toggle }] = useDisclosure();
+    const pathname = usePathname();
+    const [opened, { toggle, close }] = useDisclosure();
 
     return (
         <AppShell
@@ -42,34 +60,38 @@ export function DoCSocAppShell({ children }: { children: React.ReactNode }) {
         >
             <AppShell.Header>
                 <Group h="100%" px="md">
-                    <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+                    <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="lg" />
                     <Group justify="space-between" style={{ flex: 1 }}>
                         <DoCSocBanner width="4em" />
                         <Group ml="xl" gap={5} visibleFrom="sm" wrap="nowrap">
-                            <LinkTo href="/">Home</LinkTo>
-                            <LinkTo href="/settings">Settings</LinkTo>
-                            <LinkTo href="/products">Products</LinkTo>
+                            {NAV_LINKS.map(({ href, label }) => (
+                                <LinkTo key={href} href={href}>
+                                    {label}
+                                </LinkTo>
+                            ))}
                             <LogoutButton />
-                            <Group ml="lg">
-                                <FaSun />
-                                <Switch
-                                    checked={colorScheme === "dark"}
-                                    onChange={() => toggleColorScheme()}
-                                />
-                                <FaMoon />
-                            </Group>
+                            <ThemeToggle ml="lg" />
                         </Group>
                     </Group>
                 </Group>
             </AppShell.Header>
 
             <AppShell.Navbar py="md" px={4}>
-                <NavLink href="/" label="Home" />
-                <NavLink href="/settings" label="Settings" />
-                <NavLink href="/products" label="Products" />
-                <Container mt="lg">
+                {NAV_LINKS.map(({ href, label }) => (
+                    <NavLink
+                        key={href}
+                        component={Link}
+                        href={href}
+                        label={label}
+                        active={pathname === href}
+                        onClick={close}
+                        py="md"
+                    />
+                ))}
+                <Group justify="space-between" px="md" mt="lg">
                     <LogoutButton />
-                </Container>
+                    <ThemeToggle />
+                </Group>
             </AppShell.Navbar>
 
             <AppShell.Main>
