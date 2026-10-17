@@ -13,4 +13,4 @@ export const config = {
     matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images|gif|auth|$).*)"],
 };
 
-export { auth as middleware } from "@/auth";
+export { auth as proxy } from "@/auth";

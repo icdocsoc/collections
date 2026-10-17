@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { isValidAcademicYear, Product } from "@/lib/eactivities";
-import { RootItem } from "@prisma/client";
+import { RootItem } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 
 import prisma from "../db";

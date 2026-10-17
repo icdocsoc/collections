@@ -6,7 +6,7 @@
 import { markCollection, type OrderResponse } from "@/lib/crud/purchase";
 import { formatDateDDMMYYYY } from "@/lib/util";
 import { Checkbox, Loader } from "@mantine/core";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper } from "@/components/tables/tableFeatures";
 import React, { useMemo, useTransition } from "react";
 
 import TanstackTable from "./TanStackTable";

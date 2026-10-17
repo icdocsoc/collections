@@ -1,8 +1,8 @@
 "use client";
 
 import TanstackTable from "@/components/tables/TanStackTable";
-import type { CommitteeMember } from "@prisma/client";
-import { createColumnHelper } from "@tanstack/react-table";
+import type { CommitteeMember } from "@/generated/prisma/client";
+import { createColumnHelper } from "@/components/tables/tableFeatures";
 import React from "react";
 
 import { UserRowActions } from "./UserRowActions";
@@ -13,25 +13,25 @@ const columns = [
         cell: (info) => info.getValue(),
         header: "First Name",
         id: "firstName",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     columnHelper.accessor("surname", {
         cell: (info) => info.getValue(),
         header: "Surname",
         id: "surname",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     columnHelper.accessor("shortcode", {
         cell: (info) => info.getValue(),
         header: "Shortcode",
         id: "shortcode",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     columnHelper.accessor("position", {
         cell: (info) => info.getValue(),
         header: "Position",
         id: "position",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     columnHelper.display({
         header: "Actions",

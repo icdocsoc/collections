@@ -2,7 +2,11 @@ import { auth } from "@/auth";
 import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = auth(async function GET(req, { params }: { params?: { shortcode?: string } }) {
+export const GET = auth(async function GET(
+    req,
+    { params: paramsPromise }: { params: Promise<{ shortcode?: string }> },
+) {
+    const params = await paramsPromise;
     if (!req.auth) {
         return NextResponse.json({ status: "error", message: "Unauthorized" }, { status: 401 });
     }

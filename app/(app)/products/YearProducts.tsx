@@ -21,7 +21,7 @@ export const YearProducts: React.FC<YearProductsProps> = ({
         return <Text>No products added yet</Text>;
     }
     return (
-        <Grid columns={2} gutter="xl">
+        <Grid columns={2} gap="xl">
             {products.map((product, j) => (
                 <Grid.Col key={j} span={1}>
                     <Product

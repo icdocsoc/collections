@@ -7,7 +7,7 @@ import {
     ProductsAndVariantsByAcademicYear,
 } from "@/lib/crud/products";
 import { Alert, Grid, GridCol, Group, Stack, Title } from "@mantine/core";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper } from "@/components/tables/tableFeatures";
 import { redirect } from "next/navigation";
 import React from "react";
 import { FaInfoCircle } from "react-icons/fa";
@@ -23,19 +23,19 @@ const columns = [
         cell: (info) => info.getValue(),
         header: "Academic Year",
         id: "year",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     columnHelper.accessor("RootItem.name", {
         cell: (info) => info.getValue(),
         header: "Item Name",
         id: "itemName",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     columnHelper.accessor("RootItem.Variant.variantName", {
         cell: (info) => info.getValue(),
         header: "Variant",
         id: "variant",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
 ];
 

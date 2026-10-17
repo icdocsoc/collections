@@ -5,8 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = auth(async function GET(
     request,
-    { params }: { params?: { shortcode?: string } },
+    { params: paramsPromise }: { params: Promise<{ shortcode?: string }> },
 ) {
+    const params = await paramsPromise;
     if (!request.auth) {
         return NextResponse.json(
             {

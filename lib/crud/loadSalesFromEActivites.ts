@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { isValidAcademicYear, Sale } from "@/lib/eactivities";
 import createLogger from "@/lib/logger";
-import { RootItem } from "@prisma/client";
+import { RootItem } from "@/generated/prisma/client";
 import axios, { AxiosError } from "axios";
 import { revalidatePath } from "next/cache";
 

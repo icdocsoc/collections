@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { AcademicYear } from "@/lib/eactivities";
 import createLogger from "@/lib/logger";
-import { OrderItemImport } from "@prisma/client";
+import { OrderItemImport } from "@/generated/prisma/client";
 import { parse } from "csv-parse";
 import { revalidatePath, revalidateTag } from "next/cache";
 
@@ -179,7 +179,7 @@ export async function importCsv(
     }
 
     revalidatePath("/");
-    revalidateTag("purchases:*");
+    revalidateTag("purchases:*", { expire: 0 });
 
     return {
         status: "success",
@@ -286,5 +286,5 @@ export async function rollbackImport(importId: string) {
     });
 
     revalidatePath("/");
-    revalidateTag("purchases:*");
+    revalidateTag("purchases:*", { expire: 0 });
 }

@@ -1,11 +1,11 @@
 // Import pride merch
 // OLD Script, will not work with current codebase
 import { AcademicYear } from "@/lib/eactivities";
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "@/lib/prisma-client";
 import { parse } from "csv-parse";
 import { promises as fs } from "fs";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 // from collection/lib/config.ts
 async function getConfigValueFor(key: string) {

@@ -1,0 +1,7 @@
+# pnpm settings (this is not a monorepo: there is only the root package)
+# Dependencies allowed to run install scripts. pnpm blocks all others by default.
+allowBuilds:
+    "@parcel/watcher": true
+    "@prisma/engines": true
+    prisma: true
+    unrs-resolver: true

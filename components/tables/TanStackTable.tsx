@@ -30,16 +30,12 @@ import {
     useMantineTheme,
 } from "@mantine/core";
 import {
-    ColumnDef,
-    ColumnFiltersState,
-    SortDirection,
-    SortingState,
     flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
+    useTable,
+    type ColumnFiltersState,
+    type RowData,
+    type SortDirection,
+    type SortingState,
 } from "@tanstack/react-table";
 import React, { ComponentProps, useEffect, useMemo, useState } from "react";
 import { Pagination } from "react-headless-pagination";
@@ -52,13 +48,14 @@ import {
 } from "react-icons/rx";
 import { useMediaQuery } from "react-responsive";
 
+import { features, type AppColumnDef } from "./tableFeatures";
 import styles from "./tanstack-table.module.scss";
 
 const ICON_SIZE = 20;
 
-interface TanstackTableProps<T> {
+interface TanstackTableProps<T extends RowData> {
     data: T[];
-    columns: ColumnDef<T, any>[];
+    columns: AppColumnDef<T>[];
     enablePagination?: boolean;
     enableSearch?: boolean;
     tableProps?: ComponentProps<typeof Table>;
@@ -87,7 +84,7 @@ const getSortingIcon = (isSorted: false | SortDirection): React.ReactNode => {
 /**
  * NOTE: To allow columns to be filtered, you must ensure that they have an id and a header
  */
-export default function TanstackTable<T>({
+export default function TanstackTable<T extends RowData>({
     data,
     columns,
     enablePagination = true,
@@ -104,15 +101,14 @@ export default function TanstackTable<T>({
         pageIndex: 0, //initial page index
         pageSize: 15, //default page size
     });
-    const table = useReactTable({
+    const table = useTable({
+        features,
         data,
         columns,
-        getCoreRowModel: getCoreRowModel(),
         state: { columnFilters, sorting, pagination },
         onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
+        // v9 always registers the paginated row model; manualPagination skips it when pagination is off
+        manualPagination: !enablePagination,
         onPaginationChange: enablePagination ? setPagination : undefined,
         onColumnFiltersChange: setColumnFilters,
         enableColumnFilters: enableSearch,
@@ -150,9 +146,10 @@ export default function TanstackTable<T>({
 
     const theme = useComputedColorScheme();
 
+    // v9's useTable returns a new object every render, so `table` is not a useful effect dependency
     useEffect(() => {
-        table.setColumnFilters([{ id: currentFilteredColumn, value: searchQuery }]);
-    }, [table, searchQuery, currentFilteredColumn]);
+        setColumnFilters([{ id: currentFilteredColumn, value: searchQuery }]);
+    }, [searchQuery, currentFilteredColumn]);
 
     if (!isClient) {
         return (
@@ -263,7 +260,7 @@ export default function TanstackTable<T>({
                     totalPages={table.getPageCount()}
                     middlePagesSiblingCount={isLowWidth ? 1 : 2}
                     edgePageCount={0}
-                    currentPage={table.getState().pagination.pageIndex}
+                    currentPage={table.state.pagination.pageIndex}
                     setCurrentPage={table.setPageIndex}
                     truncableText="..."
                 >
@@ -306,7 +303,7 @@ export default function TanstackTable<T>({
                                         label: i,
                                         value: i,
                                     }))}
-                                    defaultValue={table.getState().pagination.pageSize.toString()}
+                                    defaultValue={table.state.pagination.pageSize.toString()}
                                     onChange={(newPageSize: string | null) =>
                                         table.setPageSize(parseInt(newPageSize ?? "15", 10))
                                     }
