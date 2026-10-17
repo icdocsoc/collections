@@ -119,7 +119,7 @@ export const UserSearch: React.FC<UserSearchProps> = ({
     }, []);
 
     return (
-        <Container w="70%">
+        <Container w="100%" px={0}>
             <Stack gap="lg">
                 {actionsError && (
                     <Alert title="Error" color="red" mt="md" icon={<FaTimesCircle />}>
@@ -133,7 +133,7 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                     setActionsError={setActionsError}
                 />
                 <Center>
-                    <Stack w="90%" justify="centre" align="centre">
+                    <Stack w="100%">
                         <form
                             style={{
                                 width: "100%",
@@ -149,8 +149,8 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                                 <TextInput
                                     placeholder="Enter shortcode"
                                     leftSection={<FaSearch />}
-                                    w="60%"
                                     flex={1}
+                                    miw={240}
                                     required
                                     name="shortcode"
                                     id="shortcode"
