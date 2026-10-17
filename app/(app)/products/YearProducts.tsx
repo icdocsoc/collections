@@ -23,7 +23,7 @@ export const YearProducts: React.FC<YearProductsProps> = ({
     return (
         <Grid columns={2} gap="xl">
             {products.map((product, j) => (
-                <Grid.Col key={j} span={1}>
+                <Grid.Col key={j} span={{ base: 2, md: 1 }}>
                     <Product
                         product={product}
                         academicYears={academicYears}
