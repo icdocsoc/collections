@@ -4,14 +4,14 @@
  *
  * Created with co-pilot.
  */
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "@/lib/prisma-client";
 // Load .env file ".env"
 import dotenv from "dotenv";
 import fs from "fs/promises";
 
 dotenv.config();
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 interface OutputRecord {
     to: string;

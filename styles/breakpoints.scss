@@ -31,7 +31,7 @@ SOFTWARE.
 
 /**
 Import and use like this:
-@import "@/styling/breakpoints";
+@use "@/styles/breakpoints.scss" as *;
 
 .some-class {
 	@include phablet {

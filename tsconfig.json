@@ -4,7 +4,7 @@
         "lib": ["dom", "dom.iterable", "esnext"],
         "module": "esnext",
         "moduleResolution": "bundler",
-        "jsx": "preserve",
+        "jsx": "react-jsx",
         "allowJs": true,
         "strict": true,
         "noEmit": true,
@@ -34,7 +34,8 @@
         "**/*.tsx",
         "**/*.js",
         "**/*.jsx",
-        ".next/types/**/*.ts"
+        ".next/types/**/*.ts",
+        ".next/dev/types/**/*.ts"
     ],
     "exclude": ["node_modules", "jest.config.mjs", "**/*.spec.ts", "**/*.test.ts"]
 }

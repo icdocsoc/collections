@@ -21,7 +21,7 @@ import { Dropzone } from "@mantine/dropzone";
 import "@mantine/dropzone/styles.css";
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
-import { RootItem } from "@prisma/client";
+import type { RootItem } from "@/generated/prisma/client";
 import React, { useState, useTransition } from "react";
 import {
     FaCircleCheck,

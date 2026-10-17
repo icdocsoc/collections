@@ -8,7 +8,7 @@
  */
 import { AcademicYear } from "@/lib/eactivities";
 import createLogger from "@/lib/logger";
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "@/lib/prisma-client";
 // Load .env file
 import dotenv from "dotenv";
 
@@ -57,13 +57,7 @@ const DATA_SOURCE_PATH = "./data/freshers-2025.json";
 // Start the script
 
 // 0: init db
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: process.env.COLLECTION_DATABASE_URL, // used to specify production URL
-        },
-    },
-});
+const prisma = createPrismaClient(process.env.COLLECTION_DATABASE_URL); // used to specify production URL
 
 // 0.1: Find the current academic year
 // from collection/lib/config.ts

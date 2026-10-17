@@ -27,13 +27,11 @@ When enabled, the server also prints a large `AUTH_OVERRIDE ENABLED` warning on 
 
 ## Local
 
-1. Install [pnpm](https://pnpm.io/installation) 12 (e.g. `npm install -g pnpm@12`) and run `pnpm install` (use the Node version in `.nvmrc`, Node 24)
+1. Install [pnpm](https://pnpm.io/installation) 12 (e.g. `npm install -g pnpm@12`) and run `pnpm install` (use the Node version in `.nvmrc`, Node 24). This also generates the Prisma client into `generated/prisma` (`postinstall`); re-run `pnpm prisma:generate` after changing `prisma/schema.prisma`.
 2. Copy `.env.local.template` to `.env.local` and fill in the details
     - To test without Microsoft SSO, set `AUTH_OVERRIDE_TEST_LOGIN=true` (**test only**, see above) and use the "TEST OVERRIDE" login button
-3. Load the env vars into your shell for the Prisma CLI (it only reads `.env`, not `.env.local`): `set -a; source .env.local; set +a`
-4. `npx prisma migrate deploy` to create the database tables (or `npm run prisma:push`)
-5. `npx prisma generate` to generate the Prisma client
-6. `pnpm dev` to start the dev server
+3. `pnpm prisma:deploy` to create the database tables (or `pnpm prisma:push`). The Prisma CLI reads `.env.local` via `prisma.config.ts`.
+4. `pnpm dev` to start the dev server
 
 Other scripts:
 
@@ -89,4 +87,6 @@ The application code was copied over as-is. The changes needed to make it work s
     -   `next.config.js`: `withNx` wrapper removed (it was a no-op with `svgr: false`), everything else unchanged
     -   `.prettierrc`, `.nvmrc`: copied from the monorepo root
 -   **Docker**: `Dockerfile`, `dev.docker-compose.yml` and `scripts/compose-entry.sh` updated to use `npm`/`npx prisma`/`next` directly instead of `nx`.
--   **Not yet carried over** (planned as follow-ups): CI and container image publishing (`.github/workflows/ci.yml` in docsoc-tools), dependency & security upgrades, the Playwright e2e skeleton (`collection-e2e`, which only had a placeholder test).
+-   **Not yet carried over** (planned as follow-ups): CI and container image publishing (`.github/workflows/ci.yml` in docsoc-tools), the Playwright e2e skeleton (`collection-e2e`, which only had a placeholder test).
+
+Since the move, all dependencies have been upgraded (Next.js 16, React 19, Prisma 7, Mantine 9, TanStack Table 9, ...) and the repo uses pnpm instead of npm; the config files mentioned above have changed accordingly (e.g. `eslint.config.mjs`, `jest.config.mjs`, `prisma.config.ts`).

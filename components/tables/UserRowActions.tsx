@@ -1,7 +1,7 @@
 import { deleteUser } from "@/lib/crud/committee";
 import { Button, Group, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { CommitteeMember } from "@prisma/client";
+import type { CommitteeMember } from "@/generated/prisma/client";
 import React from "react";
 import { FaTrash } from "react-icons/fa";
 

@@ -8,3 +8,4 @@ coverage
 dumps
 emails/data/*
 emails/output/*
+generated

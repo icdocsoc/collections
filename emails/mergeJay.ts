@@ -3,14 +3,14 @@
  *
  * Jay was a webmaster who got a old version of this system working on their machine, and we needed to import the collections from that DB into the working copy.
  */
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "@/lib/prisma-client";
 import { parse } from "csv-parse";
 import dotenv from "dotenv";
 import fs from "fs/promises";
 
 dotenv.config();
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 async function getStudentShortcode(orderItemId: number) {
     const orderItem = await prisma.orderItem.findUnique({

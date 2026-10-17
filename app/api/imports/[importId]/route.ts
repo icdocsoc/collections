@@ -2,8 +2,9 @@ import { auth } from "@/auth";
 import { getItemsInImport } from "@/lib/crud/importCsv";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = auth(
-    async (request, { params: paramsPromise }: { params: Promise<{ importId?: string }> }) => {
+type RouteContext = { params: Promise<{ importId?: string }> };
+
+export const GET = auth(async (request, { params: paramsPromise }: RouteContext) => {
     const params = await paramsPromise;
     if (!request.auth) {
         return NextResponse.json(

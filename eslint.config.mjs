@@ -7,7 +7,7 @@ export default defineConfig([
     ...nextVitals,
     ...nextTs,
     prettier,
-    globalIgnores([".next/**", "node_modules/**", "coverage/**", "next-env.d.ts"]),
+    globalIgnores([".next/**", "node_modules/**", "coverage/**", "generated/**", "next-env.d.ts"]),
     {
         // Rule tweaks carried over from the old .eslintrc.json (originally from plugin:@nx/typescript)
         files: ["**/*.ts", "**/*.tsx"],

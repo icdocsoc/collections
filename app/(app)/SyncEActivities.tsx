@@ -17,7 +17,7 @@ import {
     Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { RootItem } from "@prisma/client";
+import type { RootItem } from "@/generated/prisma/client";
 import React, { useCallback, useState, useTransition } from "react";
 import { FaSync } from "react-icons/fa";
 import { FaUpRightFromSquare } from "react-icons/fa6";

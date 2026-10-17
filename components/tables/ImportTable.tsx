@@ -1,7 +1,7 @@
 import { ImportItemList } from "@/lib/crud/importCsv";
 import { fetcher } from "@/lib/fetcher";
 import { Stack, Center, Loader } from "@mantine/core";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper } from "@/components/tables/tableFeatures";
 import React from "react";
 import useSWR from "swr";
 
@@ -14,41 +14,41 @@ const columns = [
         cell: (info) => info.getValue(),
         header: "Order No",
         id: "orderNo",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     // columnHelper.accessor("Order.academicYear", {
     //     cell: (info) => info.getValue(),
     //     header: "Academic Year",
     //     id: "academicYear",
-    //     sortingFn: "alphanumeric",
+    //     sortFn: "alphanumeric",
     // }),
     // Shortcode
     columnHelper.accessor("Order.ImperialStudent.shortcode", {
         cell: (info) => info.getValue(),
         header: "Shortcode",
         id: "shortcode",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     // Item name
     columnHelper.accessor("Variant.RootItem.name", {
         cell: (info) => info.getValue(),
         header: "Item Name",
         id: "itemName",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     // Variant name
     columnHelper.accessor("Variant.variantName", {
         cell: (info) => info.getValue(),
         header: "Variant",
         id: "variant",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     // Quantity
     columnHelper.accessor("quantity", {
         cell: (info) => info.getValue(),
         header: "Quantity",
         id: "quantity",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
 ];
 

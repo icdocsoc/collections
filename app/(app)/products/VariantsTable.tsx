@@ -2,7 +2,7 @@
 
 import TanstackTable from "@/components/tables/TanStackTable";
 import { Group, Text, Stack } from "@mantine/core";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper } from "@/components/tables/tableFeatures";
 import React from "react";
 
 import { DeleteProduct } from "./DeleteProduct";
@@ -20,13 +20,13 @@ const columns = [
         cell: (info) => info.getValue(),
         header: "Variant",
         id: "name",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
     columnHelper.accessor("count", {
         cell: (info) => info.getValue(),
         header: "Count",
         id: "count",
-        sortingFn: "alphanumeric",
+        sortFn: "alphanumeric",
     }),
 ];
 

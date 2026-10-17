@@ -10,11 +10,11 @@ WORKDIR /build
 RUN apk add --no-cache libc6-compat openssl
 # Install the pinned pnpm with npm rather than corepack (older corepack versions cannot run pnpm 12)
 RUN npm install -g pnpm@12.14.0
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml prisma.config.ts ./
+COPY prisma ./prisma
+# postinstall runs `prisma generate` (the client is needed for the build)
 RUN pnpm install --frozen-lockfile
 COPY . .
-# Generate Prisma Client (needed to be included in build)
-RUN pnpm exec prisma generate
 # Build the collection code
 RUN pnpm build
 

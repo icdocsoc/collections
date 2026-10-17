@@ -9,7 +9,7 @@ import {
     getAcademicYear as computeAcademicYear,
     isValidAcademicYear,
 } from "@/lib/eactivities";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 
 import prisma from "./db";
@@ -26,7 +26,7 @@ async function getConfigValueFor(key: string) {
 
 async function setConfigValueFor(
     key: string,
-    value: Prisma.NullTypes.JsonNull | Prisma.InputJsonValue,
+    value: Prisma.JsonNullValueInput | Prisma.InputJsonValue,
     update = true,
 ) {
     await prisma.config.upsert({
