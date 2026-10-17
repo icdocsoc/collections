@@ -1,5 +1,5 @@
 // util.test.ts
-import { formatDateDDMMYYYY } from "../lib/util";
+import { formatDateDDMMYYYY, normaliseShortcode } from "../lib/util";
 
 describe("formatDateDDMMYYYY", () => {
     it("should format the date correctly for a given date", () => {
@@ -24,5 +24,15 @@ describe("formatDateDDMMYYYY", () => {
         const date = new Date("2023-03-07");
         const formattedDate = formatDateDDMMYYYY(date);
         expect(formattedDate).toBe("07/03/2023");
+    });
+});
+
+describe("normaliseShortcode", () => {
+    it("lowercases, as phone keyboards capitalise the first letter", () => {
+        expect(normaliseShortcode("Abc123")).toBe("abc123");
+    });
+
+    it("trims whitespace from pasted or autocompleted input", () => {
+        expect(normaliseShortcode("  abc123 \n")).toBe("abc123");
     });
 });
