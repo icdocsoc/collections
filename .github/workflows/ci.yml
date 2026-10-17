@@ -158,8 +158,8 @@ jobs:
     publish:
         name: Publish image
         needs: docker
-        # TEMPORARY: also runs on this PR to check GHCR permissions; restricted to main before merge
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request'
+        # Pushes to main, or a manual run (workflow_dispatch) on main
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         runs-on: ubuntu-latest
         timeout-minutes: 20
         permissions:

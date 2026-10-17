@@ -53,6 +53,14 @@ Other scripts:
 3. Visit `http://localhost:3000` in your browser and login with the root user you setup in the `.env.local` file
 4. To run future DB migrations in docker compose run `docker exec -i $(docker ps -qf "name=docsoc-collection" | head -n1) pnpm exec prisma migrate dev --name migration-name`
 
+# CI
+
+`.github/workflows/ci.yml` runs on every pull request and push to `main`:
+
+1. **Checks** (in parallel): lint, typecheck, unit tests and a Next.js build
+2. **Docker image**: builds the image (layer cache in GitHub Actions) and smoke-tests it against a Postgres service
+3. **Publish** (`main` only, or a manual run on `main`): pushes the image to `ghcr.io/icdocsoc/collections` (tags `latest`, `main`, `sha-<commit>`) with a signed build provenance attestation (verify with `gh attestation verify oci://ghcr.io/icdocsoc/collections:latest -R icdocsoc/collections`)
+
 # Docker
 
 To build the production docker image, run `docker build -t docsoc/collection .` from the root of the repo.
