@@ -5,25 +5,35 @@
  * what is still to collect and what has been collected. Tablet and desktop use the table instead.
  */
 import { markCollection, type OrderResponse } from "@/lib/crud/purchase";
-import { flattenPurchases, splitByCollected, type OrderUI } from "@/lib/purchases";
+import { flattenPurchases, groupByYear, splitByCollected, type OrderUI } from "@/lib/purchases";
 import { formatDateDDMMYYYY } from "@/lib/util";
 import {
     ActionIcon,
+    Affix,
     Alert,
     Badge,
     Box,
     Button,
+    Collapse,
     Group,
     Loader,
     Paper,
     Skeleton,
     Stack,
     Text,
+    Title,
+    UnstyledButton,
 } from "@mantine/core";
-import React, { useOptimistic, useState, useTransition } from "react";
-import { FaCheck, FaTimesCircle } from "react-icons/fa";
+import React, { useEffect, useOptimistic, useState, useTransition } from "react";
+import { FaCheck, FaChevronDown, FaTimesCircle } from "react-icons/fa";
 
 import styles from "./BuyerItemsList.module.scss";
+
+/** Above this many items in total the Collected group starts folded away, so what is left stays on screen */
+const COLLAPSE_COLLECTED_ABOVE = 8;
+
+/** How long the "Undo" bar stays after collecting an item (ms) */
+const UNDO_BAR_MS = 6000;
 
 const SectionHeading = ({ title, count }: { title: string; count: number }) => (
     <Group gap="xs">
@@ -35,6 +45,109 @@ const SectionHeading = ({ title, count }: { title: string; count: number }) => (
         </Badge>
     </Group>
 );
+
+const CollectedToggle = ({
+    count,
+    expanded,
+    onToggle,
+}: {
+    count: number;
+    expanded: boolean;
+    onToggle: () => void;
+}) => (
+    <UnstyledButton onClick={onToggle} aria-expanded={expanded} py={4}>
+        <Group gap="xs">
+            <Text fw={700} size="xs" tt="uppercase" c="dimmed" lts={0.5}>
+                Collected
+            </Text>
+            <Badge size="sm" circle variant="light" color="gray">
+                {count}
+            </Badge>
+            <FaChevronDown
+                size={10}
+                color="var(--mantine-color-dimmed)"
+                style={{ transform: expanded ? "rotate(180deg)" : undefined }}
+            />
+            {!expanded && (
+                <Text size="xs" c="dimmed">
+                    Tap to show
+                </Text>
+            )}
+        </Group>
+    </UnstyledButton>
+);
+
+const YearHeading = ({ year, items }: { year: string; items: OrderUI[] }) => {
+    const collected = items.filter((item) => item.collected).length;
+
+    return (
+        <Group
+            justify="space-between"
+            wrap="nowrap"
+            pb={6}
+            style={{ borderBottom: "2px solid var(--mantine-color-default-border)" }}
+        >
+            <Title order={4}>Academic year {year}</Title>
+            {collected === items.length ? (
+                <Badge color="green" leftSection={<FaCheck size={10} />}>
+                    All done
+                </Badge>
+            ) : (
+                <Text size="sm" c="dimmed">
+                    {collected} of {items.length} collected
+                </Text>
+            )}
+        </Group>
+    );
+};
+
+/** The To collect cards, then the Collected ones (which can be folded away) */
+const ItemGroups = ({
+    items,
+    startCollapsed,
+    onToggle,
+}: {
+    items: OrderUI[];
+    startCollapsed: boolean;
+    onToggle: (row: OrderUI, collected: boolean) => void;
+}) => {
+    const { toCollect, collected } = splitByCollected(items);
+    const [collectedShown, setCollectedShown] = useState(!startCollapsed);
+
+    return (
+        <Stack gap="md">
+            {toCollect.length > 0 && (
+                <Stack gap="xs">
+                    <SectionHeading title="To collect" count={toCollect.length} />
+                    {toCollect.map((row) => (
+                        <ItemCard key={row.itemID} row={row} onToggle={(c) => onToggle(row, c)} />
+                    ))}
+                </Stack>
+            )}
+
+            {collected.length > 0 && (
+                <Stack gap="xs">
+                    <CollectedToggle
+                        count={collected.length}
+                        expanded={collectedShown}
+                        onToggle={() => setCollectedShown((shown) => !shown)}
+                    />
+                    <Collapse expanded={collectedShown}>
+                        <Stack gap="xs">
+                            {collected.map((row) => (
+                                <ItemCard
+                                    key={row.itemID}
+                                    row={row}
+                                    onToggle={(c) => onToggle(row, c)}
+                                />
+                            ))}
+                        </Stack>
+                    </Collapse>
+                </Stack>
+            )}
+        </Stack>
+    );
+};
 
 const ItemCard = ({ row, onToggle }: { row: OrderUI; onToggle: (collected: boolean) => void }) => {
     const label = `${row.item}, ${row.variant}`;
@@ -112,6 +225,14 @@ export const BuyerItemsList = ({
 }) => {
     const [isSaving, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
+    // The item just collected, so a mis-tap can be undone even if it has moved into a folded group
+    const [justCollected, setJustCollected] = useState<OrderUI | null>(null);
+
+    useEffect(() => {
+        if (!justCollected) return;
+        const timer = setTimeout(() => setJustCollected(null), UNDO_BAR_MS);
+        return () => clearTimeout(timer);
+    }, [justCollected]);
 
     // Show a change straight away; it settles to the real value once saved (or reverts if it fails)
     const [rows, setCollectedOptimistically] = useOptimistic(
@@ -130,6 +251,7 @@ export const BuyerItemsList = ({
             setCollectedOptimistically({ itemID: row.itemID, collected });
             try {
                 await markCollection(row.orderNo, row.itemID, collected, shortcode);
+                setJustCollected(collected ? row : null);
                 await refresh();
             } catch (e) {
                 console.error(e);
@@ -158,6 +280,9 @@ export const BuyerItemsList = ({
 
     const { toCollect, collected } = splitByCollected(rows);
     const allDone = toCollect.length === 0;
+    // Decided from the total, which never changes while collecting, so a group can't snap shut mid-way
+    const collapseCollected = rows.length > COLLAPSE_COLLECTED_ABOVE;
+    const years = groupByYear(rows);
 
     return (
         <Stack gap="md">
@@ -197,22 +322,50 @@ export const BuyerItemsList = ({
                 </Alert>
             )}
 
-            {toCollect.length > 0 && (
-                <Stack gap="xs">
-                    <SectionHeading title="To collect" count={toCollect.length} />
-                    {toCollect.map((row) => (
-                        <ItemCard key={row.itemID} row={row} onToggle={(c) => toggle(row, c)} />
-                    ))}
-                </Stack>
+            {years.length > 1 ? (
+                // Several academic years: one clearly labelled section per year
+                years.map(({ year, items }) => (
+                    <Stack key={`${shortcode}-${year}`} gap="md">
+                        <YearHeading year={year} items={items} />
+                        <ItemGroups
+                            items={items}
+                            startCollapsed={collapseCollected}
+                            onToggle={toggle}
+                        />
+                    </Stack>
+                ))
+            ) : (
+                <ItemGroups
+                    key={shortcode}
+                    items={rows}
+                    startCollapsed={collapseCollected}
+                    onToggle={toggle}
+                />
             )}
 
-            {collected.length > 0 && (
-                <Stack gap="xs">
-                    <SectionHeading title="Collected" count={collected.length} />
-                    {collected.map((row) => (
-                        <ItemCard key={row.itemID} row={row} onToggle={(c) => toggle(row, c)} />
-                    ))}
-                </Stack>
+            {justCollected && (
+                <Affix position={{ bottom: 16, left: 16, right: 16 }} zIndex={200}>
+                    <Paper withBorder shadow="md" radius="md" p="sm" role="status">
+                        <Group justify="space-between" wrap="nowrap">
+                            <Group gap="sm" wrap="nowrap" miw={0}>
+                                <FaCheck color="var(--mantine-color-green-6)" />
+                                <Text size="sm" lineClamp={2}>
+                                    Collected <b>{justCollected.item}</b> ({justCollected.variant})
+                                </Text>
+                            </Group>
+                            <Button
+                                variant="light"
+                                color="gray"
+                                size="md"
+                                h={44}
+                                flex="none" // keep "Undo" readable however long the item name is
+                                onClick={() => toggle(justCollected, false)}
+                            >
+                                Undo
+                            </Button>
+                        </Group>
+                    </Paper>
+                </Affix>
             )}
         </Stack>
     );

@@ -5,6 +5,7 @@ export interface OrderUI {
     id: number;
     orderNo: number;
     date: Date;
+    academicYear: string;
     item: string;
     variant: string;
     collected: boolean;
@@ -25,6 +26,7 @@ export const flattenPurchases = (purchases: OrderResponse[]): OrderUI[] =>
                 id: item.id,
                 orderNo: order.orderNoShop,
                 date: order.date,
+                academicYear: order.academicYear,
                 item: item.name,
                 variant: item.variant,
                 collected: item.collected,
@@ -39,3 +41,10 @@ export const splitByCollected = (items: OrderUI[]) => ({
     toCollect: items.filter((item) => !item.collected),
     collected: items.filter((item) => item.collected),
 });
+
+/** Group items by academic year, newest year first (years look like "26-27", so they sort as text) */
+export const groupByYear = (items: OrderUI[]): { year: string; items: OrderUI[] }[] =>
+    [...new Set(items.map((item) => item.academicYear))]
+        .sort()
+        .reverse()
+        .map((year) => ({ year, items: items.filter((item) => item.academicYear === year) }));

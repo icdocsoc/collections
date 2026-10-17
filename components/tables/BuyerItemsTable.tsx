@@ -54,6 +54,8 @@ export const BuyerItemsTable = ({
     refresh: () => Promise<void>;
 }) => {
     const flatItems = flattenPurchases(purchases);
+    // Only worth a column when the buyer has items from more than one academic year
+    const showYear = new Set(flatItems.map((item) => item.academicYear)).size > 1;
 
     const columns = useMemo(
         () => [
@@ -72,6 +74,16 @@ export const BuyerItemsTable = ({
                 header: "Date",
                 cell: (info) => formatDateDDMMYYYY(new Date(info.getValue())),
             }),
+            ...(showYear
+                ? [
+                      columnHelper.accessor("academicYear", {
+                          id: "year",
+                          header: "Year",
+                          cell: (info) => info.getValue(),
+                          sortFn: "alphanumeric",
+                      }),
+                  ]
+                : []),
             columnHelper.accessor("item", {
                 id: "itemName",
                 header: "Item Name",
@@ -100,7 +112,7 @@ export const BuyerItemsTable = ({
                 ),
             }),
         ],
-        [shortcode],
+        [shortcode, showYear],
     );
 
     return (
