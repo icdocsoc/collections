@@ -1,0 +1,10 @@
+node_modules
+.next
+coverage
+.git
+.env
+.env.local
+.env.prod
+dumps
+emails/data/*
+emails/output/*

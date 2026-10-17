@@ -1,0 +1,2 @@
+# Dockerfile for docker compose
+FROM node:lts
