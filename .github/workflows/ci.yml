@@ -83,7 +83,7 @@ jobs:
                 ports:
                     - 5432:5432
                 options: >-
-                    --health-cmd pg_isready
+                    --health-cmd "pg_isready -U postgres"
                     --health-interval 5s
                     --health-timeout 5s
                     --health-retries 10
@@ -150,3 +150,63 @@ jobs:
             - name: Container logs
               if: always()
               run: docker logs collections || true
+
+    # ==================
+    # Stage 3: publish to GHCR (main only)
+    # Separate job so only this job gets write access to packages / attestations
+    # ==================
+    publish:
+        name: Publish image
+        needs: docker
+        # TEMPORARY: also runs on this PR to check GHCR permissions; restricted to main before merge
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request'
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        permissions:
+            contents: read
+            packages: write # push to GHCR
+            id-token: write # sign the build provenance attestation
+            attestations: write
+            artifact-metadata: write
+        env:
+            IMAGE: ghcr.io/${{ github.repository }}
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: docker/setup-buildx-action@v4
+
+            - name: Log in to GHCR
+              uses: docker/login-action@v4
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Docker metadata
+              id: meta
+              uses: docker/metadata-action@v6
+              with:
+                  images: ${{ env.IMAGE }}
+                  tags: |
+                      type=ref,event=branch
+                      type=ref,event=pr
+                      type=sha
+                      type=raw,value=latest,enable={{is_default_branch}}
+
+            # Same build as the docker job: every layer comes from the GHA cache it just wrote
+            - name: Build and push image
+              id: push
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha
+
+            - name: Attest build provenance
+              uses: actions/attest@v4
+              with:
+                  subject-name: ${{ env.IMAGE }}
+                  subject-digest: ${{ steps.push.outputs.digest }}
+                  push-to-registry: true
