@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { getAcademicYear } from "@/lib/config";
 import { getPurchasesByShortcode } from "@/lib/crud/purchase";
+import { normaliseShortcode } from "@/lib/util";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = auth(async function GET(
@@ -30,5 +31,7 @@ export const GET = auth(async function GET(
     const academicYears = searchParams.get("academicYears")?.split(",") ?? [
         await getAcademicYear(),
     ];
-    return NextResponse.json(await getPurchasesByShortcode(params.shortcode, academicYears));
+    return NextResponse.json(
+        await getPurchasesByShortcode(normaliseShortcode(params.shortcode), academicYears),
+    );
 });

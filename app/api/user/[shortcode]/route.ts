@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/db";
+import { normaliseShortcode } from "@/lib/util";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = auth(async function GET(
@@ -18,7 +19,7 @@ export const GET = auth(async function GET(
         );
     }
 
-    const { shortcode } = params;
+    const shortcode = normaliseShortcode(params.shortcode);
 
     if (!shortcode) {
         return NextResponse.json(

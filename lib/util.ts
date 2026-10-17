@@ -5,3 +5,9 @@ export const formatDateDDMMYYYY = (date: Date): string => {
 
     return formattedDate;
 };
+
+/**
+ * Normalise a shortcode typed or pasted by a user: phone keyboards capitalise the first letter
+ * and pasted text often has stray whitespace, but shortcodes (eActivities logins) are lowercase.
+ */
+export const normaliseShortcode = (shortcode: string): string => shortcode.trim().toLowerCase();

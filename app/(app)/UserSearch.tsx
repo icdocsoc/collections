@@ -4,6 +4,7 @@ import { UserInfo } from "@/components/UserInfo";
 import { BuyerItemsTable } from "@/components/tables/BuyerItemsTable";
 import { OrderResponse } from "@/lib/crud/purchase";
 import { AcademicYear } from "@/lib/eactivities";
+import { normaliseShortcode } from "@/lib/util";
 import { Group, TextInput, Button, Alert, Container, Center, Stack } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -96,14 +97,16 @@ export const UserSearch: React.FC<UserSearchProps> = ({
     });
 
     const submitAction = useCallback(
-        ({ shortcode }: { shortcode: string }) => {
+        ({ shortcode: enteredShortcode }: { shortcode: string }) => {
+            const shortcode = normaliseShortcode(enteredShortcode);
+            form.setFieldValue("shortcode", shortcode);
             startTransition(async () => {
                 setError(null);
                 await fetchPurchases(shortcode);
                 router.push("/?shortcode=" + shortcode);
             });
         },
-        [router, fetchPurchases],
+        [router, fetchPurchases, form],
     );
 
     // Run fetchPurchases on initial render
@@ -151,6 +154,12 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                                     required
                                     name="shortcode"
                                     id="shortcode"
+                                    // Shortcodes are lowercase logins: stop phone keyboards capitalising/correcting them
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    enterKeyHint="search"
                                     {...form.getInputProps("shortcode")}
                                 />
                                 <Button loading={isPending} type="submit">
