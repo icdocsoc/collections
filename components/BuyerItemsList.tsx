@@ -57,6 +57,7 @@ const ItemCard = ({ row, onToggle }: { row: OrderUI; onToggle: (collected: boole
                             <Badge
                                 color="orange"
                                 variant="filled"
+                                flex="none" // never squash the quantity when the name wraps
                                 aria-label={`Quantity ${row.quantity}`}
                             >
                                 ×{row.quantity}
