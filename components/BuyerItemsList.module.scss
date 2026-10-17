@@ -1,0 +1,23 @@
+.card {
+    border-left: 4px solid var(--mantine-primary-color-filled);
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease;
+
+    &[data-collected] {
+        border-left-color: var(--mantine-color-green-6);
+        background-color: var(--mantine-color-green-light);
+    }
+}
+
+// One pill per item in the progress bar
+.segment {
+    height: 8px;
+    border-radius: 999px;
+    background-color: var(--mantine-color-default-border);
+    transition: background-color 200ms ease;
+
+    &[data-collected] {
+        background-color: var(--mantine-color-green-6);
+    }
+}

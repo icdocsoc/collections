@@ -3,24 +3,14 @@
 /**
  * Table with the items of a buyer
  */
+import { createColumnHelper } from "@/components/tables/tableFeatures";
 import { markCollection, type OrderResponse } from "@/lib/crud/purchase";
+import { flattenPurchases, type OrderUI } from "@/lib/purchases";
 import { formatDateDDMMYYYY } from "@/lib/util";
 import { Checkbox, Loader } from "@mantine/core";
-import { createColumnHelper } from "@/components/tables/tableFeatures";
 import React, { useMemo, useTransition } from "react";
 
 import TanstackTable from "./TanStackTable";
-
-interface OrderUI {
-    id: number;
-    orderNo: number;
-    date: Date;
-    item: string;
-    variant: string;
-    collected: boolean;
-    itemID: number;
-    quantity: number;
-}
 
 const columnHelper = createColumnHelper<OrderUI>();
 
@@ -63,18 +53,7 @@ export const BuyerItemsTable = ({
     shortcode: string;
     refresh: () => Promise<void>;
 }) => {
-    const flatItems: OrderUI[] = purchases.flatMap((order) =>
-        order.items.map((item) => ({
-            id: item.id,
-            orderNo: order.orderNoShop,
-            date: order.date,
-            item: item.name,
-            variant: item.variant,
-            collected: item.collected,
-            itemID: item.id,
-            quantity: item.quantity,
-        })),
-    );
+    const flatItems = flattenPurchases(purchases);
 
     const columns = useMemo(
         () => [

@@ -1,0 +1,7 @@
+// On phones the admin tools (academic year filter, eActivities sync, CSV import) are tucked away
+// until asked for, so the search and the buyer's items are what you see first
+@media (max-width: 47.99em) {
+    .adminTools:not([data-open]) {
+        display: none;
+    }
+}

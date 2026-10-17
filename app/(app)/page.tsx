@@ -22,7 +22,9 @@ export default async function Index() {
 
     return (
         <Stack gap="lg">
-            <Title order={1}>DoCSoc Collection System</Title>
+            <Title order={1} fz={{ base: "h3", sm: "h1" }}>
+                DoCSoc Collection System
+            </Title>
             <UserSearch
                 currentAcademicYear={currentAcademicYear}
                 validAcaemicYears={academicYears}
