@@ -147,3 +147,13 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# ======================
+# Collections app (migrated from icdocsoc/docsoc-tools)
+# ======================
+# Keep env templates committed
+!.env*.template
+!emails/.env.template
+.env.local
+.env.prod
+dumps
