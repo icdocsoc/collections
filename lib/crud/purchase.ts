@@ -111,5 +111,5 @@ export const markCollection = async (
         },
     });
 
-    revalidateTag(`purchases:${shortcode}`);
+    revalidateTag(`purchases:${shortcode}`, { expire: 0 });
 };

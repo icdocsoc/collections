@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const nextJest = require("next/jest");
+import nextJest from "next/jest.js";
 
 const createJestConfig = nextJest({
     // Path to the Next.js app, so next.config.js and .env files are loaded in the test environment
@@ -17,4 +16,4 @@ const config = {
     coverageDirectory: "coverage",
 };
 
-module.exports = createJestConfig(config);
+export default createJestConfig(config);

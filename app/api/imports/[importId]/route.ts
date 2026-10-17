@@ -2,7 +2,9 @@ import { auth } from "@/auth";
 import { getItemsInImport } from "@/lib/crud/importCsv";
 import { NextRequest, NextResponse } from "next/server";
 
-export const GET = auth(async (request, { params }: { params?: { importId?: string } }) => {
+export const GET = auth(
+    async (request, { params: paramsPromise }: { params: Promise<{ importId?: string }> }) => {
+    const params = await paramsPromise;
     if (!request.auth) {
         return NextResponse.json(
             {

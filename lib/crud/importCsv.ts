@@ -179,7 +179,7 @@ export async function importCsv(
     }
 
     revalidatePath("/");
-    revalidateTag("purchases:*");
+    revalidateTag("purchases:*", { expire: 0 });
 
     return {
         status: "success",
@@ -286,5 +286,5 @@ export async function rollbackImport(importId: string) {
     });
 
     revalidatePath("/");
-    revalidateTag("purchases:*");
+    revalidateTag("purchases:*", { expire: 0 });
 }

@@ -1,23 +1,25 @@
 # This template uses Automatically Copying Traced Files feature
 # so you need to setup your Next Config file to use `output: 'standalone'`
 # Please read this for more information https://nextjs.org/docs/pages/api-reference/next-config-js/output
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /build
 
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat openssl
-COPY package.json package-lock.json* ./
-RUN npm ci
+# Install the pinned pnpm with npm rather than corepack (older corepack versions cannot run pnpm 12)
+RUN npm install -g pnpm@12.14.0
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
 # Generate Prisma Client (needed to be included in build)
-RUN npx prisma generate
+RUN pnpm exec prisma generate
 # Build the collection code
-RUN npm run build
+RUN pnpm build
 
 # Production image, copy all the files and run next
-FROM docker.io/node:lts-alpine AS runner
+FROM node:24-alpine AS runner
 RUN apk add --no-cache dumb-init openssl
 
 ENV NODE_ENV=production

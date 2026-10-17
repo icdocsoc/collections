@@ -3,7 +3,7 @@
         "target": "es2022",
         "lib": ["dom", "dom.iterable", "esnext"],
         "module": "esnext",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "jsx": "preserve",
         "allowJs": true,
         "strict": true,
@@ -24,7 +24,6 @@
             }
         ],
         "types": ["jest", "node"],
-        "baseUrl": ".",
         "paths": {
             "@/*": ["./*"]
         }
@@ -37,5 +36,5 @@
         "**/*.jsx",
         ".next/types/**/*.ts"
     ],
-    "exclude": ["node_modules", "jest.config.js", "**/*.spec.ts", "**/*.test.ts"]
+    "exclude": ["node_modules", "jest.config.mjs", "**/*.spec.ts", "**/*.test.ts"]
 }
