@@ -1,0 +1,152 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+    workflow_dispatch:
+
+# Cancel superseded runs on the same branch / PR, but never on main
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+    contents: read
+
+jobs:
+    # ==================
+    # Stage 1: checks (run in parallel)
+    # ==================
+    lint:
+        name: Lint
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/setup
+            - run: pnpm lint
+            - name: Check formatting of CI files
+              run: pnpm exec prettier --check .github
+
+    typecheck:
+        name: Typecheck
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/setup
+            - run: pnpm typecheck
+
+    test:
+        name: Unit tests
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/setup
+            - run: pnpm test --ci
+
+    build:
+        name: Next.js build
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/setup
+            - name: Cache Next.js build cache
+              uses: actions/cache@v5
+              with:
+                  path: .next/cache
+                  key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.js', '**/*.mjs', '**/*.scss', '!node_modules/**', '!.next/**') }}
+                  restore-keys: |
+                      nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            - run: pnpm build
+
+    # ==================
+    # Stage 2: container image
+    # ==================
+    docker:
+        name: Docker image
+        needs: [lint, typecheck, test, build]
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        env:
+            IMAGE: ghcr.io/${{ github.repository }}
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: collections
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: docker/setup-buildx-action@v4
+
+            - name: Docker metadata
+              id: meta
+              uses: docker/metadata-action@v6
+              with:
+                  images: ${{ env.IMAGE }}
+                  tags: |
+                      type=ref,event=branch
+                      type=ref,event=pr
+                      type=sha
+                      type=raw,value=latest,enable={{is_default_branch}}
+
+            - name: Build image
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  load: true
+                  push: false
+                  # Extra local tag so the smoke test can refer to the image
+                  tags: |
+                      ${{ steps.meta.outputs.tags }}
+                      collections:ci
+                  labels: ${{ steps.meta.outputs.labels }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            # ==================
+            # Smoke test: run the built image against a real database
+            # ==================
+            - uses: ./.github/actions/setup
+
+            - name: Apply database migrations
+              run: pnpm prisma:deploy
+              env:
+                  COLLECTION_DATABASE_URL: postgres://postgres:postgres@localhost:5432/collections
+
+            - name: Smoke test image
+              run: |
+                  docker run -d --name collections --network host \
+                    -e PORT=3000 \
+                    -e AUTH_SECRET=ci-smoke-test-secret-not-used-anywhere-else \
+                    -e AUTH_TRUST_HOST=true \
+                    -e COLLECTION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/collections \
+                    collections:ci
+
+                  # Wait for the server, then check the login page renders (it needs the DB to start)
+                  for i in $(seq 1 30); do
+                    if curl -fsS -o /dev/null http://localhost:3000/auth/login; then
+                      echo "Login page OK"
+                      exit 0
+                    fi
+                    sleep 2
+                  done
+                  echo "Image failed smoke test" >&2
+                  exit 1
+
+            - name: Container logs
+              if: always()
+              run: docker logs collections || true
