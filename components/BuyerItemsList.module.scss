@@ -1,16 +1,27 @@
+// The left border and background say what state an item is in at a glance
 .card {
     border-left: 4px solid var(--mantine-primary-color-filled);
     transition:
         border-color 150ms ease,
         background-color 150ms ease;
 
-    &[data-collected] {
+    &[data-state="COLLECTED"] {
         border-left-color: var(--mantine-color-green-6);
         background-color: var(--mantine-color-green-light);
     }
+
+    &[data-state="FORFEITED"] {
+        border-left-color: var(--mantine-color-red-6);
+        background-color: var(--mantine-color-red-light);
+    }
+
+    &[data-state="REFUNDED"] {
+        border-left-color: var(--mantine-color-grape-6);
+        background-color: var(--mantine-color-grape-light);
+    }
 }
 
-// One pill per item in the progress bar
+// One pill per item still expected to be collected in the progress bar
 .segment {
     height: 8px;
     border-radius: 999px;

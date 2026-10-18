@@ -1,5 +1,5 @@
 import type { OrderResponse } from "../lib/crud/purchase";
-import { flattenPurchases, groupByYear, splitByCollected } from "../lib/purchases";
+import { collectionProgress, flattenPurchases, groupByYear, splitByState } from "../lib/purchases";
 
 const orders: OrderResponse[] = [
     {
@@ -8,8 +8,8 @@ const orders: OrderResponse[] = [
         date: new Date("2026-10-14"),
         academicYear: "26-27",
         items: [
-            { id: 10, name: "Hoodie", variant: "L - Navy", collected: false, quantity: 1 },
-            { id: 11, name: "Lanyard", variant: "Standard", collected: true, quantity: 2 },
+            { id: 10, name: "Hoodie", variant: "L - Navy", state: "UNCOLLECTED", quantity: 1 },
+            { id: 11, name: "Lanyard", variant: "Standard", state: "COLLECTED", quantity: 2 },
         ],
     },
     {
@@ -17,7 +17,11 @@ const orders: OrderResponse[] = [
         orderNoShop: 6002,
         date: new Date("2026-10-16"),
         academicYear: "26-27",
-        items: [{ id: 12, name: "Tote Bag", variant: "One size", collected: false, quantity: 1 }],
+        items: [
+            { id: 12, name: "Tote Bag", variant: "One size", state: "UNCOLLECTED", quantity: 1 },
+            { id: 13, name: "Scarf", variant: "Standard", state: "FORFEITED", quantity: 1 },
+            { id: 14, name: "Mug", variant: "Standard", state: "REFUNDED", quantity: 1 },
+        ],
     },
 ];
 
@@ -29,6 +33,8 @@ describe("flattenPurchases", () => {
             [10, "Hoodie", 6001],
             [11, "Lanyard", 6001],
             [12, "Tote Bag", 6002],
+            [13, "Scarf", 6002],
+            [14, "Mug", 6002],
         ]);
         expect(rows[2].date).toEqual(new Date("2026-10-16"));
     });
@@ -39,7 +45,7 @@ describe("flattenPurchases", () => {
             { ...orders[0], items: [orders[0].items[1], orders[0].items[0]] },
         ];
 
-        expect(flattenPurchases(shuffled).map((row) => row.itemID)).toEqual([10, 11, 12]);
+        expect(flattenPurchases(shuffled).map((row) => row.itemID)).toEqual([10, 11, 12, 13, 14]);
     });
 
     it("returns nothing for a buyer with no orders", () => {
@@ -47,12 +53,24 @@ describe("flattenPurchases", () => {
     });
 });
 
-describe("splitByCollected", () => {
-    it("separates collected from uncollected items, keeping the original order", () => {
-        const { toCollect, collected } = splitByCollected(flattenPurchases(orders));
+describe("splitByState", () => {
+    it("puts each item under its state, keeping the original order", () => {
+        const byState = splitByState(flattenPurchases(orders));
 
-        expect(toCollect.map((row) => row.itemID)).toEqual([10, 12]);
-        expect(collected.map((row) => row.itemID)).toEqual([11]);
+        expect(byState.UNCOLLECTED.map((row) => row.itemID)).toEqual([10, 12]);
+        expect(byState.COLLECTED.map((row) => row.itemID)).toEqual([11]);
+        expect(byState.FORFEITED.map((row) => row.itemID)).toEqual([13]);
+        expect(byState.REFUNDED.map((row) => row.itemID)).toEqual([14]);
+    });
+});
+
+describe("collectionProgress", () => {
+    it("leaves forfeited and refunded items out of what is expected to be collected", () => {
+        expect(collectionProgress(flattenPurchases(orders))).toEqual({
+            toCollect: 2,
+            collected: 1,
+            expected: 3,
+        });
     });
 });
 
@@ -62,14 +80,14 @@ describe("groupByYear", () => {
         orderNoShop: 5001,
         date: new Date("2025-10-01"),
         academicYear: "25-26",
-        items: [{ id: 9, name: "Hoodie", variant: "M - Black", collected: true, quantity: 1 }],
+        items: [{ id: 9, name: "Hoodie", variant: "M - Black", state: "COLLECTED", quantity: 1 }],
     };
 
     it("groups items by academic year, newest year first", () => {
         const groups = groupByYear(flattenPurchases([lastYear, ...orders]));
 
         expect(groups.map((group) => group.year)).toEqual(["26-27", "25-26"]);
-        expect(groups[0].items.map((row) => row.itemID)).toEqual([10, 11, 12]);
+        expect(groups[0].items.map((row) => row.itemID)).toEqual([10, 11, 12, 13, 14]);
         expect(groups[1].items.map((row) => row.itemID)).toEqual([9]);
     });
 

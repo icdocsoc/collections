@@ -57,8 +57,8 @@ async function getUncollectedPeople() {
         const student = orderItem.Order.ImperialStudent;
         const studentKey = student.email;
 
-        if (orderItem.collected) {
-            console.log(`Skipping ${studentKey} as already collected`);
+        if (orderItem.state !== "UNCOLLECTED") {
+            console.log(`Skipping ${studentKey} as already ${orderItem.state.toLowerCase()}`);
             continue;
         }
 

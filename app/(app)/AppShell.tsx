@@ -26,6 +26,7 @@ const NAV_LINKS = [
     { href: "/", label: "Home" },
     { href: "/settings", label: "Settings" },
     { href: "/products", label: "Products" },
+    { href: "/forfeit", label: "Forfeit" },
 ];
 
 const ThemeToggle = (props: GroupProps) => {

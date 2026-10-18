@@ -1,7 +1,8 @@
 "use server";
 
 import { auth } from "@/auth";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { CollectionState } from "@/generated/prisma/enums";
+import { revalidateTag } from "next/cache";
 
 import prisma from "../db";
 
@@ -16,7 +17,7 @@ export interface OrderResponse {
         id: number;
         name: string;
         variant: string;
-        collected: boolean;
+        state: CollectionState;
         quantity: number;
     }[];
 }
@@ -75,7 +76,7 @@ export const getPurchasesByShortcode = async (
                 return {
                     name: orderItem.Variant.RootItem.name,
                     variant: orderItem.Variant.variantName,
-                    collected: orderItem.collected,
+                    state: orderItem.state,
                     id: orderItem.id,
                     quantity: orderItem.quantity,
                 };
@@ -89,10 +90,13 @@ export const getPurchasesByShortcode = async (
     };
 };
 
-export const markCollection = async (
+/** The states an item can be given from a student's page. FORFEITED is only set in bulk (see `forfeit.ts`) */
+const INDIVIDUAL_STATES: CollectionState[] = ["UNCOLLECTED", "COLLECTED", "REFUNDED"];
+
+export const setItemState = async (
     orderNo: number,
     itemID: number,
-    collected: boolean,
+    state: CollectionState,
     shortcode: string,
 ) => {
     // Action so auth needed
@@ -100,6 +104,10 @@ export const markCollection = async (
 
     if (!session) {
         throw new Error("Unauthorized");
+    }
+
+    if (!INDIVIDUAL_STATES.includes(state)) {
+        throw new Error(`An item can't be marked as ${state} on its own`);
     }
 
     await prisma.orderItem.update({
@@ -110,7 +118,7 @@ export const markCollection = async (
             },
         },
         data: {
-            collected: collected,
+            state,
         },
     });
 

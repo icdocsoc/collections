@@ -177,7 +177,6 @@ async function main() {
                         quantity: VARIANT_QUANTITY,
                         variantId: item.Variant[0].id,
                         importId: importItem.id,
-                        collected: false,
                     },
                 },
             },
