@@ -16,6 +16,8 @@ import {
     Text,
     TextInput,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
 import React, { useState, useTransition } from "react";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
@@ -40,28 +42,60 @@ const formatLongDate = (date: string) =>
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
+interface ForfeitValues {
+    /** YYYY-MM-DD, as a date input gives it */
+    before: string;
+    scope: "all" | "some";
+    /** "p:<id>" for every variant of a product, "v:<id>" for a single variant */
+    selected: string[];
+}
+
+/** What happened after the last Check or Forfeit */
+type Outcome =
+    | { kind: "preview"; preview: ForfeitPreview }
+    | { kind: "error"; message: string }
+    | { kind: "done"; message: string }
+    | null;
+
+const buildScope = ({ before, scope, selected }: ForfeitValues): ForfeitScope => {
+    const ids = (prefix: string) =>
+        scope === "all"
+            ? []
+            : selected
+                  .filter((value) => value.startsWith(prefix))
+                  .map((value) => Number(value.slice(prefix.length)));
+    return { before: startOfDay(before), productIds: ids("p:"), variantIds: ids("v:") };
+};
+
 export const ForfeitForm = ({
     productsByYear,
 }: {
     productsByYear: ProductsAndVariantsByAcademicYear[];
 }) => {
-    const [date, setDate] = useState("");
-    const [scope, setScope] = useState<"all" | "some">("all");
-    // "p:<id>" for every variant of a product, "v:<id>" for a single variant
-    const [selected, setSelected] = useState<string[]>([]);
-
-    const [preview, setPreview] = useState<ForfeitPreview | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [done, setDone] = useState<string | null>(null);
-    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [outcome, setOutcome] = useState<Outcome>(null);
+    const [confirmOpen, confirm] = useDisclosure(false);
     const [isChecking, startChecking] = useTransition();
 
-    // Any change means the preview no longer matches what would be forfeited, so it must be checked again
-    const changed = () => {
-        setPreview(null);
-        setError(null);
-        setDone(null);
-    };
+    const form = useForm<ForfeitValues>({
+        initialValues: { before: "", scope: "all", selected: [] },
+        validate: {
+            // YYYY-MM-DD strings compare in date order
+            before: (value) =>
+                !value
+                    ? "Choose a date"
+                    : value > today()
+                      ? "The date can't be in the future"
+                      : null,
+            selected: (value, values) =>
+                values.scope === "some" && value.length === 0
+                    ? "Pick at least one product or variant"
+                    : null,
+        },
+        // Any change means the preview no longer matches what would be forfeited, so it must be checked again
+        onValuesChange: () => setOutcome(null),
+    });
+    const { before, scope, selected } = form.getValues();
+    const preview = outcome?.kind === "preview" ? outcome.preview : null;
 
     const options = productsByYear.flatMap(({ year, RootItem }) =>
         RootItem.map((product) => ({
@@ -76,54 +110,38 @@ export const ForfeitForm = ({
         })),
     );
 
-    const buildScope = (): ForfeitScope => {
-        const ids = (prefix: string) =>
-            scope === "all"
-                ? []
-                : selected
-                      .filter((value) => value.startsWith(prefix))
-                      .map((value) => Number(value.slice(prefix.length)));
-        return { before: startOfDay(date), productIds: ids("p:"), variantIds: ids("v:") };
-    };
-
-    const canCheck = date !== "" && (scope === "all" || selected.length > 0);
-
-    const check = () =>
+    const check = (values: ForfeitValues) =>
         startChecking(async () => {
-            changed();
-            const res = await previewForfeit(buildScope());
-            if (res.status === "error") {
-                setError(res.error);
-            } else {
-                setPreview(res.preview);
-            }
+            setOutcome(null);
+            const res = await previewForfeit(buildScope(values));
+            setOutcome(
+                res.status === "error"
+                    ? { kind: "error", message: res.error }
+                    : { kind: "preview", preview: res.preview },
+            );
         });
 
     const forfeit = async () => {
         if (!preview) return;
-        const res = await forfeitItems(buildScope(), preview.items);
-        setPreview(null);
-        if (res.status === "error") {
-            setError(res.error);
-        } else {
-            setDone(`Forfeited ${plural(res.forfeited, "item")}.`);
-        }
+        const res = await forfeitItems(buildScope(form.getValues()), preview.items);
+        setOutcome(
+            res.status === "error"
+                ? { kind: "error", message: res.error }
+                : { kind: "done", message: `Forfeited ${plural(res.forfeited, "item")}.` },
+        );
     };
 
     return (
         <Stack gap="lg">
-            <Paper withBorder radius="md" p="md">
+            <Paper withBorder radius="md" p="md" component="form" onSubmit={form.onSubmit(check)}>
                 <Stack gap="md">
                     <TextInput
                         type="date"
                         label="Orders placed before"
                         description="Orders placed on this date are not included"
                         max={today()}
-                        value={date}
-                        onChange={(e) => {
-                            setDate(e.currentTarget.value);
-                            changed();
-                        }}
+                        key={form.key("before")}
+                        {...form.getInputProps("before")}
                         maw={260}
                     />
 
@@ -132,11 +150,8 @@ export const ForfeitForm = ({
                             Items
                         </Text>
                         <SegmentedControl
-                            value={scope}
-                            onChange={(value) => {
-                                setScope(value as "all" | "some");
-                                changed();
-                            }}
+                            key={form.key("scope")}
+                            {...form.getInputProps("scope")}
                             data={[
                                 { value: "all", label: "All items" },
                                 { value: "some", label: "Only some items" },
@@ -151,11 +166,8 @@ export const ForfeitForm = ({
                             description="Pick a whole product, or just some of its variants"
                             placeholder={selected.length === 0 ? "Search products" : undefined}
                             data={options}
-                            value={selected}
-                            onChange={(value) => {
-                                setSelected(value);
-                                changed();
-                            }}
+                            key={form.key("selected")}
+                            {...form.getInputProps("selected")}
                             searchable
                             clearable
                             nothingFoundMessage="No matching products"
@@ -163,22 +175,22 @@ export const ForfeitForm = ({
                     )}
 
                     <Group>
-                        <Button onClick={check} disabled={!canCheck} loading={isChecking}>
+                        <Button type="submit" loading={isChecking}>
                             Check what will be forfeited
                         </Button>
                     </Group>
                 </Stack>
             </Paper>
 
-            {error && (
+            {outcome?.kind === "error" && (
                 <Alert color="red" icon={<FaTimesCircle />}>
-                    {error}
+                    {outcome.message}
                 </Alert>
             )}
 
-            {done && (
+            {outcome?.kind === "done" && (
                 <Alert color="green" icon={<FaCheckCircle />}>
-                    {done}
+                    {outcome.message}
                 </Alert>
             )}
 
@@ -186,7 +198,7 @@ export const ForfeitForm = ({
                 (preview.items === 0 ? (
                     <Alert color="blue">
                         Nothing to forfeit: no uncollected items match from orders placed before{" "}
-                        {formatLongDate(date)}.
+                        {formatLongDate(before)}.
                     </Alert>
                 ) : (
                     <Paper withBorder radius="md" p="md" aria-label="What will be forfeited">
@@ -197,7 +209,7 @@ export const ForfeitForm = ({
                             <Text size="sm" c="dimmed">
                                 From {plural(preview.orders, "order")} by{" "}
                                 {plural(preview.students, "student")}, placed before{" "}
-                                {formatLongDate(date)}.
+                                {formatLongDate(before)}.
                             </Text>
                             <Divider />
                             <Stack gap={4}>
@@ -217,7 +229,7 @@ export const ForfeitForm = ({
                                 ))}
                             </Stack>
                             <Group justify="flex-end">
-                                <Button color="red" onClick={() => setConfirmOpen(true)}>
+                                <Button color="red" onClick={confirm.open}>
                                     Forfeit {plural(preview.items, "item")}
                                 </Button>
                             </Group>
@@ -227,15 +239,15 @@ export const ForfeitForm = ({
 
             <ConfirmModal
                 opened={confirmOpen}
-                close={() => setConfirmOpen(false)}
+                close={confirm.close}
                 confirmButtonText={`Yes, forfeit ${plural(preview?.items ?? 0, "item")}`}
                 onConfirm={forfeit}
             >
                 <Text>
                     Forfeit <b>{plural(preview?.items ?? 0, "uncollected item")}</b> from orders
-                    placed before <b>{date && formatLongDate(date)}</b>? They won&apos;t be handed
-                    out. There is no bulk undo: each item would have to be changed back on the
-                    student&apos;s page.
+                    placed before <b>{before && formatLongDate(before)}</b>? They won&apos;t be
+                    handed out. There is no bulk undo: each item would have to be changed back on
+                    the student&apos;s page.
                 </Text>
             </ConfirmModal>
         </Stack>
