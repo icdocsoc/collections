@@ -1,5 +1,5 @@
 import { AcademicYear } from "@/lib/eactivities";
-import { Paper, MultiSelect, Group } from "@mantine/core";
+import { Paper, Group } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 
 import { CSVImport } from "./CSVImport";
@@ -18,25 +18,16 @@ export const PageActions = ({
 }) => {
     return (
         <Paper p="lg" withBorder>
-            <Group justify="space-between">
-                <MultiSelect
-                    label="Show purchases from academic years"
-                    description=" "
-                    key={formHook.key("academicYears")}
-                    data={academicYears}
-                    {...formHook.getInputProps("academicYears")}
+            <Group>
+                <SyncEActivities
+                    setActionsError={setActionsError}
+                    academicYears={academicYears}
+                    currentlySelectedAcademicYears={formHook.getValues().academicYears}
                 />
-                <Group>
-                    <SyncEActivities
-                        setActionsError={setActionsError}
-                        academicYears={academicYears}
-                        currentlySelectedAcademicYears={formHook.getValues().academicYears}
-                    />
-                    <CSVImport
-                        academicYears={academicYears}
-                        currentAcademicYear={currentAcademicYear}
-                    />
-                </Group>
+                <CSVImport
+                    academicYears={academicYears}
+                    currentAcademicYear={currentAcademicYear}
+                />
             </Group>
         </Paper>
     );

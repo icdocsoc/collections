@@ -1,8 +1,8 @@
 "use client";
 
+import { AcademicYearFilter } from "@/components/AcademicYearFilter";
 import { BuyerItemsList } from "@/components/BuyerItemsList";
 import { UserInfo } from "@/components/UserInfo";
-import { BuyerItemsTable } from "@/components/tables/BuyerItemsTable";
 import { OrderResponse } from "@/lib/crud/purchase";
 import { AcademicYear } from "@/lib/eactivities";
 import { normaliseShortcode } from "@/lib/util";
@@ -39,7 +39,7 @@ export const UserSearch: React.FC<UserSearchProps> = ({
     const [actionsError, setActionsError] = useState<string | null>(null);
     const [purchases, setPurchases] = useState<OrderResponse[]>([]);
     const [isPending, startTransition] = useTransition();
-    // Phones only: show the admin tools (see UserSearch.module.scss)
+    // The admin tools (sync, import) are tucked away until asked for (see UserSearch.module.scss)
     const [adminToolsOpen, { toggle: toggleAdminTools }] = useDisclosure(false);
 
     const searchParams = useSearchParams();
@@ -147,7 +147,6 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                     </Alert>
                 )}
                 <Button
-                    hiddenFrom="sm"
                     ml="auto"
                     mb={-8}
                     variant="subtle"
@@ -157,7 +156,7 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                     aria-expanded={adminToolsOpen}
                     onClick={toggleAdminTools}
                 >
-                    {adminToolsOpen ? "Hide" : "Import, sync & filters"}
+                    {adminToolsOpen ? "Hide" : "Import & sync"}
                 </Button>
                 <Box className={styles.adminTools} data-open={adminToolsOpen || undefined}>
                     <PageActions
@@ -195,11 +194,10 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                                     autoComplete="off"
                                     spellCheck={false}
                                     enterKeyHint="search"
-                                    // Phones: clear from inside the field (the Clear button is hidden there)
+                                    // Clear from inside the field
                                     rightSection={
                                         form.values.shortcode ? (
                                             <CloseButton
-                                                hiddenFrom="sm"
                                                 aria-label="Clear search"
                                                 onClick={clearSearch}
                                             />
@@ -210,11 +208,15 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                                 <Button loading={isPending} type="submit">
                                     Submit
                                 </Button>
-                                <Button color="pink" visibleFrom="sm" onClick={clearSearch}>
-                                    Clear
-                                </Button>
                             </Group>
                         </form>
+                        <AcademicYearFilter
+                            years={validAcaemicYears}
+                            value={form.values.academicYears}
+                            onChange={(years) =>
+                                form.setFieldValue("academicYears", years as AcademicYear[])
+                            }
+                        />
                         {error && (
                             <Alert title="Error" color="red" mt="md" icon={<FaTimesCircle />}>
                                 {error}
@@ -227,25 +229,12 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                 </Center>
 
                 {!error && (
-                    <>
-                        {/* Tablet and up: compact table */}
-                        <Box visibleFrom="sm">
-                            <BuyerItemsTable
-                                shortcode={shortcodeURLParam}
-                                purchases={purchases}
-                                refresh={() => fetchPurchases(shortcodeURLParam)}
-                            />
-                        </Box>
-                        {/* Phones: one card per item */}
-                        <Box hiddenFrom="sm">
-                            <BuyerItemsList
-                                shortcode={shortcodeURLParam}
-                                purchases={purchases}
-                                refresh={() => fetchPurchases(shortcodeURLParam)}
-                                isLoading={isPending}
-                            />
-                        </Box>
-                    </>
+                    <BuyerItemsList
+                        shortcode={shortcodeURLParam}
+                        purchases={purchases}
+                        refresh={() => fetchPurchases(shortcodeURLParam)}
+                        isLoading={isPending}
+                    />
                 )}
             </Stack>
         </Container>

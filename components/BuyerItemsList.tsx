@@ -1,14 +1,15 @@
 "use client";
 
 /**
- * Phone-friendly view of a buyer's items: a progress summary, then one card per item split into
- * what is still to collect and what has been collected. Tablet and desktop use the table instead.
+ * A buyer's items: a progress summary, then one card per item split into what is still to collect
+ * and what has been collected (grouped by academic year when there is more than one). The same
+ * view at every screen size, as a single column.
  */
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { markCollection, type OrderResponse } from "@/lib/crud/purchase";
 import { flattenPurchases, groupByYear, splitByCollected, type OrderUI } from "@/lib/purchases";
 import { formatDateDDMMYYYY } from "@/lib/util";
 import {
-    ActionIcon,
     Affix,
     Alert,
     Badge,
@@ -21,11 +22,12 @@ import {
     Skeleton,
     Stack,
     Text,
+    ThemeIcon,
     Title,
     UnstyledButton,
 } from "@mantine/core";
 import React, { useEffect, useOptimistic, useState, useTransition } from "react";
-import { FaCheck, FaChevronDown, FaTimesCircle } from "react-icons/fa";
+import { FaCheck, FaChevronDown, FaTimesCircle, FaUndo } from "react-icons/fa";
 
 import styles from "./BuyerItemsList.module.scss";
 
@@ -105,11 +107,13 @@ const YearHeading = ({ year, items }: { year: string; items: OrderUI[] }) => {
 const ItemGroups = ({
     items,
     startCollapsed,
-    onToggle,
+    onCollect,
+    onUndo,
 }: {
     items: OrderUI[];
     startCollapsed: boolean;
-    onToggle: (row: OrderUI, collected: boolean) => void;
+    onCollect: (row: OrderUI) => void;
+    onUndo: (row: OrderUI) => void;
 }) => {
     const { toCollect, collected } = splitByCollected(items);
     const [collectedShown, setCollectedShown] = useState(!startCollapsed);
@@ -119,9 +123,16 @@ const ItemGroups = ({
             {toCollect.length > 0 && (
                 <Stack gap="xs">
                     <SectionHeading title="To collect" count={toCollect.length} />
-                    {toCollect.map((row) => (
-                        <ItemCard key={row.itemID} row={row} onToggle={(c) => onToggle(row, c)} />
-                    ))}
+                    <CardGrid>
+                        {toCollect.map((row) => (
+                            <ItemCard
+                                key={row.itemID}
+                                row={row}
+                                onCollect={() => onCollect(row)}
+                                onUndo={() => onUndo(row)}
+                            />
+                        ))}
+                    </CardGrid>
                 </Stack>
             )}
 
@@ -133,15 +144,16 @@ const ItemGroups = ({
                         onToggle={() => setCollectedShown((shown) => !shown)}
                     />
                     <Collapse expanded={collectedShown}>
-                        <Stack gap="xs">
+                        <CardGrid>
                             {collected.map((row) => (
                                 <ItemCard
                                     key={row.itemID}
                                     row={row}
-                                    onToggle={(c) => onToggle(row, c)}
+                                    onCollect={() => onCollect(row)}
+                                    onUndo={() => onUndo(row)}
                                 />
                             ))}
-                        </Stack>
+                        </CardGrid>
                     </Collapse>
                 </Stack>
             )}
@@ -149,7 +161,20 @@ const ItemGroups = ({
     );
 };
 
-const ItemCard = ({ row, onToggle }: { row: OrderUI; onToggle: (collected: boolean) => void }) => {
+/** The cards in a single column at every screen size: easiest to scan top to bottom */
+const CardGrid = ({ children }: { children: React.ReactNode }) => (
+    <Stack gap="xs">{children}</Stack>
+);
+
+const ItemCard = ({
+    row,
+    onCollect,
+    onUndo,
+}: {
+    row: OrderUI;
+    onCollect: () => void;
+    onUndo: () => void;
+}) => {
     const label = `${row.item}, ${row.variant}`;
 
     return (
@@ -163,6 +188,11 @@ const ItemCard = ({ row, onToggle }: { row: OrderUI; onToggle: (collected: boole
             <Group wrap="nowrap" gap="sm">
                 <Stack gap={2} flex={1} miw={0}>
                     <Group gap={6} wrap="nowrap" align="flex-start">
+                        {row.collected && (
+                            <ThemeIcon color="green" size="sm" radius="xl" mt={2} flex="none">
+                                <FaCheck size={9} />
+                            </ThemeIcon>
+                        )}
                         <Text fw={700} lh={1.25}>
                             {row.item}
                         </Text>
@@ -186,23 +216,26 @@ const ItemCard = ({ row, onToggle }: { row: OrderUI; onToggle: (collected: boole
                 </Stack>
 
                 {row.collected ? (
-                    <ActionIcon
-                        size={44}
-                        radius="xl"
+                    <Button
                         variant="default"
-                        c="green"
-                        aria-label={`${label} is collected. Tap to mark as not collected`}
-                        onClick={() => onToggle(false)}
+                        size="md"
+                        h={44}
+                        flex="none"
+                        leftSection={<FaUndo size={12} />}
+                        title="Mark as not collected"
+                        aria-label={`Undo collecting ${label}`}
+                        onClick={onUndo}
                     >
-                        <FaCheck size={18} />
-                    </ActionIcon>
+                        Undo
+                    </Button>
                 ) : (
                     <Button
                         size="md"
                         h={44}
+                        flex="none"
                         color="green"
-                        aria-label={`Mark ${label} as collected`}
-                        onClick={() => onToggle(true)}
+                        aria-label={`Collect ${label}`}
+                        onClick={onCollect}
                     >
                         Collect
                     </Button>
@@ -227,6 +260,14 @@ export const BuyerItemsList = ({
     const [error, setError] = useState<string | null>(null);
     // The item just collected, so a mis-tap can be undone even if it has moved into a folded group
     const [justCollected, setJustCollected] = useState<OrderUI | null>(null);
+    // The item whose Undo button was tapped, waiting for confirmation (kept after closing so the
+    // dialog text doesn't change while it fades out)
+    const [confirmUndo, setConfirmUndo] = useState<OrderUI | null>(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const askToUndo = (row: OrderUI) => {
+        setConfirmUndo(row);
+        setConfirmOpen(true);
+    };
 
     useEffect(() => {
         if (!justCollected) return;
@@ -330,7 +371,8 @@ export const BuyerItemsList = ({
                         <ItemGroups
                             items={items}
                             startCollapsed={collapseCollected}
-                            onToggle={toggle}
+                            onCollect={(row) => toggle(row, true)}
+                            onUndo={askToUndo}
                         />
                     </Stack>
                 ))
@@ -339,13 +381,29 @@ export const BuyerItemsList = ({
                     key={shortcode}
                     items={rows}
                     startCollapsed={collapseCollected}
-                    onToggle={toggle}
+                    onCollect={(row) => toggle(row, true)}
+                    onUndo={askToUndo}
                 />
             )}
 
             {justCollected && (
-                <Affix position={{ bottom: 16, left: 16, right: 16 }} zIndex={200}>
-                    <Paper withBorder shadow="md" radius="md" p="sm" role="status">
+                // Fixed to the bottom; the wrapper ignores clicks so only the bar itself is clickable
+                <Affix
+                    position={{ bottom: 16, left: 0, right: 0 }}
+                    zIndex={200}
+                    style={{ pointerEvents: "none" }}
+                >
+                    <Paper
+                        withBorder
+                        shadow="md"
+                        radius="md"
+                        p="sm"
+                        role="status"
+                        mx="auto"
+                        maw={560}
+                        w="calc(100% - 32px)"
+                        style={{ pointerEvents: "auto" }}
+                    >
                         <Group justify="space-between" wrap="nowrap">
                             <Group gap="sm" wrap="nowrap" miw={0}>
                                 <FaCheck color="var(--mantine-color-green-6)" />
@@ -367,6 +425,24 @@ export const BuyerItemsList = ({
                     </Paper>
                 </Affix>
             )}
+
+            <ConfirmModal
+                opened={confirmOpen}
+                close={() => setConfirmOpen(false)}
+                confirmButtonText="Yes, mark as not collected"
+                onConfirm={async () => {
+                    if (confirmUndo) toggle(confirmUndo, false);
+                }}
+            >
+                <Text>
+                    Mark{" "}
+                    <b>
+                        {confirmUndo?.item} ({confirmUndo?.variant})
+                    </b>{" "}
+                    as <b>not collected</b>? It will go back to the To collect list, so it could be
+                    handed out again.
+                </Text>
+            </ConfirmModal>
         </Stack>
     );
 };
