@@ -1,0 +1,5 @@
+// The admin tools (eActivities sync, CSV import) are tucked away until asked for, so the search
+// and the buyer's items are what you see first
+.adminTools:not([data-open]) {
+    display: none;
+}

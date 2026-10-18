@@ -9,6 +9,8 @@ export interface OrderResponse {
     orderIDInternal: number;
     orderNoShop: number;
     date: Date;
+    /** Academic year the order belongs to, e.g. "26-27" */
+    academicYear: string;
 
     items: {
         id: number;
@@ -68,6 +70,7 @@ export const getPurchasesByShortcode = async (
             orderIDInternal: order.id,
             orderNoShop: order.orderNo,
             date: order.orderDate,
+            academicYear: order.academicYear,
             items: order.OrderItem.map((orderItem) => {
                 return {
                     name: orderItem.Variant.RootItem.name,

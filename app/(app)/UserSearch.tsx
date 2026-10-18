@@ -1,17 +1,30 @@
 "use client";
 
+import { AcademicYearFilter } from "@/components/AcademicYearFilter";
+import { BuyerItemsList } from "@/components/BuyerItemsList";
 import { UserInfo } from "@/components/UserInfo";
-import { BuyerItemsTable } from "@/components/tables/BuyerItemsTable";
 import { OrderResponse } from "@/lib/crud/purchase";
 import { AcademicYear } from "@/lib/eactivities";
 import { normaliseShortcode } from "@/lib/util";
-import { Group, TextInput, Button, Alert, Container, Center, Stack } from "@mantine/core";
+import {
+    Group,
+    TextInput,
+    Button,
+    Alert,
+    Box,
+    CloseButton,
+    Container,
+    Center,
+    Stack,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { FaSearch, FaTimesCircle } from "react-icons/fa";
+import { FaCog, FaSearch, FaTimesCircle } from "react-icons/fa";
 
 import { PageActions } from "./PageActions";
+import styles from "./UserSearch.module.scss";
 
 interface UserSearchProps {
     currentAcademicYear: AcademicYear;
@@ -26,6 +39,8 @@ export const UserSearch: React.FC<UserSearchProps> = ({
     const [actionsError, setActionsError] = useState<string | null>(null);
     const [purchases, setPurchases] = useState<OrderResponse[]>([]);
     const [isPending, startTransition] = useTransition();
+    // The admin tools (sync, import) are tucked away until asked for (see UserSearch.module.scss)
+    const [adminToolsOpen, { toggle: toggleAdminTools }] = useDisclosure(false);
 
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -109,6 +124,11 @@ export const UserSearch: React.FC<UserSearchProps> = ({
         [router, fetchPurchases, form],
     );
 
+    const clearSearch = () => {
+        setPurchases([]);
+        router.push("/");
+    };
+
     // Run fetchPurchases on initial render
     useEffect(() => {
         if (shortcodeURLParam) {
@@ -126,12 +146,26 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                         {actionsError}
                     </Alert>
                 )}
-                <PageActions
-                    currentAcademicYear={currentAcademicYear}
-                    academicYears={validAcaemicYears}
-                    formHook={form}
-                    setActionsError={setActionsError}
-                />
+                <Button
+                    ml="auto"
+                    mb={-8}
+                    variant="subtle"
+                    color="gray"
+                    size="compact-sm"
+                    leftSection={<FaCog />}
+                    aria-expanded={adminToolsOpen}
+                    onClick={toggleAdminTools}
+                >
+                    {adminToolsOpen ? "Hide" : "Import & sync"}
+                </Button>
+                <Box className={styles.adminTools} data-open={adminToolsOpen || undefined}>
+                    <PageActions
+                        currentAcademicYear={currentAcademicYear}
+                        academicYears={validAcaemicYears}
+                        formHook={form}
+                        setActionsError={setActionsError}
+                    />
+                </Box>
                 <Center>
                     <Stack w="100%">
                         <form
@@ -145,12 +179,12 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                             // eslint-disable-next-line @typescript-eslint/no-empty-function
                             action={() => {}}
                         >
-                            <Group w="100%">
+                            <Group w="100%" wrap="nowrap">
                                 <TextInput
                                     placeholder="Enter shortcode"
                                     leftSection={<FaSearch />}
                                     flex={1}
-                                    miw={240}
+                                    miw={0}
                                     required
                                     name="shortcode"
                                     id="shortcode"
@@ -160,22 +194,29 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                                     autoComplete="off"
                                     spellCheck={false}
                                     enterKeyHint="search"
+                                    // Clear from inside the field
+                                    rightSection={
+                                        form.values.shortcode ? (
+                                            <CloseButton
+                                                aria-label="Clear search"
+                                                onClick={clearSearch}
+                                            />
+                                        ) : null
+                                    }
                                     {...form.getInputProps("shortcode")}
                                 />
                                 <Button loading={isPending} type="submit">
                                     Submit
                                 </Button>
-                                <Button
-                                    color="pink"
-                                    onClick={() => {
-                                        setPurchases([]);
-                                        router.push("/");
-                                    }}
-                                >
-                                    Clear
-                                </Button>
                             </Group>
                         </form>
+                        <AcademicYearFilter
+                            years={validAcaemicYears}
+                            value={form.values.academicYears}
+                            onChange={(years) =>
+                                form.setFieldValue("academicYears", years as AcademicYear[])
+                            }
+                        />
                         {error && (
                             <Alert title="Error" color="red" mt="md" icon={<FaTimesCircle />}>
                                 {error}
@@ -187,14 +228,13 @@ export const UserSearch: React.FC<UserSearchProps> = ({
                     <UserInfo shortcode={shortcodeURLParam} />
                 </Center>
 
-                {!error ? (
-                    <BuyerItemsTable
+                {!error && (
+                    <BuyerItemsList
                         shortcode={shortcodeURLParam}
                         purchases={purchases}
                         refresh={() => fetchPurchases(shortcodeURLParam)}
+                        isLoading={isPending}
                     />
-                ) : (
-                    <></>
                 )}
             </Stack>
         </Container>

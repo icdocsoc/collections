@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { getAcademicYear } from "@/lib/config";
 import { getAcademicYearsInDB } from "@/lib/crud/academic-year";
 import { getImportList } from "@/lib/crud/importCsv";
-import { Stack, Title } from "@mantine/core";
+import { Container, Stack, Title } from "@mantine/core";
 import { redirect } from "next/navigation";
 import React from "react";
 
@@ -21,13 +21,18 @@ export default async function Index() {
     const imports = await getImportList();
 
     return (
-        <Stack gap="lg">
-            <Title order={1}>DoCSoc Collection System</Title>
-            <UserSearch
-                currentAcademicYear={currentAcademicYear}
-                validAcaemicYears={academicYears}
-            />
-            <ImportsList imports={imports} />
-        </Stack>
+        // One narrow column at every screen size: easiest to scan
+        <Container size="sm" px={0}>
+            <Stack gap="lg">
+                <Title order={1} fz={{ base: "h3", sm: "h1" }}>
+                    DoCSoc Collection System
+                </Title>
+                <UserSearch
+                    currentAcademicYear={currentAcademicYear}
+                    validAcaemicYears={academicYears}
+                />
+                <ImportsList imports={imports} />
+            </Stack>
+        </Container>
     );
 }
