@@ -138,7 +138,6 @@ async function importFile(
                 orderId: order.id,
                 variantId: varientDB.id,
                 quantity: quantity,
-                collected: false,
                 importId: importItem.id,
             },
         });

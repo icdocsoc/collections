@@ -270,7 +270,6 @@ export async function loadSalesFromEActivites(
                     orderId: order.id,
                     variantId: varientDB.id,
                     quantity: quantity,
-                    collected: false,
                     importId: importItem.id,
                 },
             });

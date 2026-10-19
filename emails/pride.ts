@@ -118,7 +118,6 @@ async function main(fileName: string) {
                     create: {
                         variantId: lanyard.Variant[0].id,
                         quantity: 1,
-                        collected: false,
                         importId: importItem.id,
                     },
                 },

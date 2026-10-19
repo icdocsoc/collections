@@ -27,7 +27,8 @@ interface OutputRecord {
 
 async function getUncollectedPeople() {
     const uncollectedOrders = await prisma.orderItem.findMany({
-        where: { collected: false },
+        // Forfeited and refunded items are not waiting to be collected, so get no reminder
+        where: { state: "UNCOLLECTED" },
         include: {
             Order: {
                 include: {

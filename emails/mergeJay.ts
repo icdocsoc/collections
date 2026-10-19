@@ -57,11 +57,11 @@ async function mergeJayDump() {
             continue;
         }
 
-        if (jayCollected && !localOrderItem.collected) {
+        if (jayCollected && localOrderItem.state !== "COLLECTED") {
             // Update the local database to mark the item as collected
             // await prisma.orderItem.update({
             //     where: { id: orderItemId },
-            //     data: { collected: true },
+            //     data: { state: "COLLECTED" },
             // });
             console.warn(
                 `JAY TRUE, KISHAN FALSE: OrderItem with ID ${orderItemId} marked as collected in the local database. Shortcode: ${await getStudentShortcode(
@@ -73,7 +73,7 @@ async function mergeJayDump() {
         }
 
         // if I have it marked as true, but Jay has it marked as false, report this
-        if (localOrderItem.collected && !jayCollected) {
+        if (localOrderItem.state === "COLLECTED" && !jayCollected) {
             console.warn(
                 `KISHAN TRUE, JAY FALSE: OrderItem with ID ${orderItemId} marked as collected in the local database, but not in Jay's dump.`,
             );
