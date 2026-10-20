@@ -24,7 +24,7 @@ export async function getAcademicYear(): Promise<AcademicYear> {
 async function main(fileName: string) {
     // Create pride
     const lanyard = await prisma.rootItem.upsert({
-        where: { name: "Pride Lanyard" },
+        where: { name_academicYear: { name: "Pride Lanyard", academicYear: (await getAcademicYear()) as string as AcademicYear } },
         update: {},
         create: {
             name: "Pride Lanyard",

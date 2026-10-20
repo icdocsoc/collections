@@ -84,7 +84,7 @@ async function main() {
     // 1: Upsert the item
 
     const item = await prisma.rootItem.upsert({
-        where: { name: ROOT_ITEM_NAME },
+        where: { name_academicYear: { name: ROOT_ITEM_NAME, academicYear: currentAcademicYear } },
         update: {},
         create: {
             name: ROOT_ITEM_NAME,

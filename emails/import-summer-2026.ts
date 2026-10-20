@@ -395,7 +395,6 @@ async function importXLSX(
                         quantity: records.length,
                         variantId: varientLookup.id,
                         importId: importItem.id,
-                        collected: false,
                     },
                 },
             },
