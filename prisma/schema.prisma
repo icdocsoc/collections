@@ -124,7 +124,7 @@ enum CollectionState {
 // RootItems are what we sell, and have Variants. Knows as Products
 model RootItem {
     id      Int       @id @default(autoincrement())
-    name    String    @unique
+    name    String
     Variant Variant[]
 
     // Items are added in some academic year
@@ -135,6 +135,9 @@ model RootItem {
     eActivitiesId   Int?
     eActivitiesName String?
     eActivitiesURL  String?
+
+    // Unique constraint on name and academic year, so we can have the same item in different years
+    @@unique([name, academicYear])
 }
 
 model Variant {

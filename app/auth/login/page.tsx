@@ -8,7 +8,7 @@ import { FaKey } from "react-icons/fa";
 // AUTH_OVERRIDE: test-only, remove before prod (see lib/auth-override.ts).
 // Renders this page per-request so the override login button follows the runtime env var
 // rather than whatever was set at build time (e.g. when testing the docker image).
-export const dynamic = "force-dynamic"; // AUTH_OVERRIDE
+//export const dynamic = "force-dynamic"; // AUTH_OVERRIDE
 
 const namesMap = (name: string) => {
     switch (name) {

@@ -18,7 +18,7 @@ const { combine, colorize, printf, timestamp } = winston.format;
  * logger.info("Hello, world!");
  * // Output: 2024-07-31T20:08:14.697Z my-module info Hello, world!
  */
-export default function createLogger(moduleName: string) {
+export default function createLogger(moduleName: string, level = "info"): winston.Logger {
     const options: winston.LoggerOptions = {
         transports: [
             new winston.transports.Console({
@@ -31,7 +31,7 @@ export default function createLogger(moduleName: string) {
                         } ${info.message}`;
                     }),
                 ),
-                level: "debug",
+                level: level,
             }),
         ],
     };

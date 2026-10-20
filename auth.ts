@@ -3,7 +3,7 @@ import type { Provider } from "next-auth/providers";
 import MicrosoftEntraIDProfile from "next-auth/providers/microsoft-entra-id";
 
 // AUTH_OVERRIDE: test-only, remove before prod (see lib/auth-override.ts)
-import { AUTH_OVERRIDE_PROVIDER_ID, getAuthOverrideProviders } from "./lib/auth-override";
+// import { AUTH_OVERRIDE_PROVIDER_ID, getAuthOverrideProviders } from "./lib/auth-override";
 import { getCommitteeMember } from "./lib/crud/committee";
 
 const providers: Provider[] = [
@@ -12,7 +12,7 @@ const providers: Provider[] = [
         clientSecret: process.env.MS_ENTRA_CLIENT_SECRET,
         // next-auth v5 betas after beta.20 dropped `tenantId`: the tenant is now part of the issuer URL
         issuer: process.env.MS_ENTRA_TENANT_ID
-            ? `https://login.microsoftonline.com/${process.env.MS_ENTRA_TENANT_ID}/v2.0/`
+            ? `https://login.microsoftonline.com/${process.env.MS_ENTRA_TENANT_ID}/v2.0`
             : undefined,
         authorization: {
             params: {
@@ -21,7 +21,7 @@ const providers: Provider[] = [
         },
         name: "Imperial SSO",
     }),
-    ...getAuthOverrideProviders(), // AUTH_OVERRIDE: test-only, remove before prod (see lib/auth-override.ts)
+    // ...getAuthOverrideProviders(), // AUTH_OVERRIDE: test-only, remove before prod (see lib/auth-override.ts)
 ];
 
 export const providerMap = providers.map((provider) => {
@@ -38,8 +38,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     callbacks: {
         async signIn({ profile, account }) {
             // AUTH_OVERRIDE: test-only, remove before prod (see lib/auth-override.ts)
-            if (account?.provider === AUTH_OVERRIDE_PROVIDER_ID) return true; // AUTH_OVERRIDE
-            console.log(profile);
+            // if (account?.provider === AUTH_OVERRIDE_PROVIDER_ID) return true; // AUTH_OVERRIDE
+            // console.log(profile);
             const { email } = profile as any;
             // Docsoc can always login
 
